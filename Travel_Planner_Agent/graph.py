@@ -4,7 +4,10 @@ if sys.stdout and hasattr(sys.stdout, "reconfigure"):
 if sys.stderr and hasattr(sys.stderr, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
+import atexit
 import psycopg
+from langgraph.checkpoint.memory import MemorySaver
+from psycopg_pool import ConnectionPool
 from langgraph.checkpoint.postgres import PostgresSaver
 from langgraph.graph import END, START, StateGraph
 
@@ -34,6 +37,7 @@ AGENT_ORDER = [
 ]
 
 ROUTE_MAP = {
+    "__end__": END,
     "flight_agent": "flight_agent",
     "hotel_agent": "hotel_agent",
     "weather_agent": "weather_agent",
@@ -48,6 +52,8 @@ def _selected_agents(state: TravelState) -> list[str]:
 
 
 def route_from_supervisor(state: TravelState) -> str:
+    if state.get("blocked"):
+        return "__end__"
     selected = _selected_agents(state)
     return selected[0] if selected else "itinerary_agent"
 
@@ -88,16 +94,24 @@ def build_graph():
     graph.add_conditional_edges("weather_agent", route_after_agent("weather_agent"), ROUTE_MAP)
     graph.add_conditional_edges("budget_agent", route_after_agent("budget_agent"), ROUTE_MAP)
     graph.add_edge("itinerary_agent", "human_approval")
-    graph.add_edge("human_approval", "final_response")
+    graph.add_conditional_edges(
+        "human_approval",
+        lambda state: "final_response" if state.get("approved") is True else "itinerary_agent",
+        {"final_response": "final_response", "itinerary_agent": "itinerary_agent"},
+    )
     graph.add_edge("final_response", END)
 
     if DATABASE_URL:
-        conn = psycopg.connect(DATABASE_URL, autocommit=True)
-        checkpointer = PostgresSaver(conn)
+        pool = ConnectionPool(
+            conninfo=DATABASE_URL, min_size=1, max_size=5,
+            kwargs={"autocommit": True, "prepare_threshold": 0},
+        )
+        atexit.register(pool.close)
+        checkpointer = PostgresSaver(pool)
         checkpointer.setup()
         return graph.compile(checkpointer=checkpointer)
 
-    return graph.compile()
+    return graph.compile(checkpointer=MemorySaver())
 
 
 app = build_graph()

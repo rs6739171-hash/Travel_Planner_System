@@ -6,6 +6,7 @@ class TravelState(TypedDict,total=False):
     messages: Annotated[list[AnyMessage], operator.add]
     user_id: str
     user_query: str
+    blocked: bool
 
     trip_constraints: dict[str, Any]
     selected_agents: list[str]

@@ -24,7 +24,14 @@ def search_flights(query: str = "") -> str:
     if not AVIATION_STACK_API_KEY:
         return "Flight search API key not configured."
 
-    url = "http://api.aviationstack.com/v1/flights"
+    # This endpoint returns operational flight status, not fares or availability.
+    # Natural-language routes cannot be safely translated to IATA codes here.
+    if query.strip():
+        return ("Route-specific live flight results are unavailable. AviationStack requires "
+                "verified IATA airport filters; do not use unrelated flight records or invent fares.")
+
+
+    url = "https://api.aviationstack.com/v1/flights"
     params = {
         "access_key": AVIATION_STACK_API_KEY,
         "limit": 5
@@ -34,7 +41,8 @@ def search_flights(query: str = "") -> str:
         response = requests.get(url, params=params, timeout=10)
         data = response.json()
     except Exception as e:
-        return f"Flight lookup error: {e}"
+        return "Flight lookup is unavailable. No live fare or availability has been verified."
+
 
     flights = []
     if "data" in data and isinstance(data["data"], list):
@@ -50,6 +58,8 @@ def search_flights(query: str = "") -> str:
     return "\n\n".join(flights) if flights else "No direct flight status records returned."
 
 async def tavily_mcp_search(query: str = "Top hotels in Tokyo") -> str:
+    if not TAVILY_API_KEY:
+        return "Hotel search is unavailable: Tavily is not configured. Do not invent availability."
     try:
         tools = await client.get_tools()
         search_tool = next(
@@ -68,7 +78,7 @@ async def tavily_mcp_search(query: str = "Top hotels in Tokyo") -> str:
             return "\n".join(texts)
         return str(result)
     except Exception as e:
-        return f"Hotel search error: {e}"
+        return "Hotel search is temporarily unavailable. No live availability has been verified."
 
 def get_airports(destination: str = ""):
     return {
@@ -93,7 +103,7 @@ def get_weather(city: str):
         response = requests.get(url, timeout=10)
         data = response.json()
     except Exception as e:
-        return {"error": str(e)}
+        return {"error": "Weather provider is temporarily unavailable."}
 
     if response.status_code == 200:
         return {
@@ -116,7 +126,7 @@ def weather_forecast(city: str):
         response = requests.get(url, timeout=10)
         data = response.json()
     except Exception as e:
-        return {"error": str(e)}
+        return {"error": "Weather provider is temporarily unavailable."}
 
     if response.status_code != 200:
         return {"error": data.get("message", f"Failed to get forecast for {city}")}

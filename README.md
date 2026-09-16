@@ -55,3 +55,9 @@ Travel_Planner_Agent/
   state.py             - Shared TravelState schema
   frontend.py       - Streamlit UI
   requirements.txt
+
+
+
+## Reviewed deployment setup
+
+See [DEPLOYMENT_REVIEW.md](DEPLOYMENT_REVIEW.md) for the review findings, required secrets, hosting setup, verification limits, and remaining work. The Render blueprint is [render.yaml](render.yaml).
