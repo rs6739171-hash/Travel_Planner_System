@@ -12,12 +12,31 @@ from langgraph.types import Command
 
 
 # pyrefly: ignore [missing-import]
+from config import DATABASE_URL, OPENAI_API_KEY
+from deployment_access import require_access
+
+st.set_page_config(page_title="Real-World Multi-Agent Travel Planner", layout="wide")
+require_access()
+if not OPENAI_API_KEY:
+    st.error("The travel planner is awaiting its AI service configuration. Contact the owner.")
+    st.stop()
 from graph import app
 
 
-st.set_page_config(page_title="Real-World Multi-Agent Travel Planner", layout="wide")
+def invoke_workflow(value, config):
+    try:
+        return app.invoke(value, config=config)
+    except Exception:
+        st.error("The planning service could not finish this request. Please try again or contact the owner.")
+        st.stop()
+
+
+
+
 
 st.title("Real-World Multi-Agent Travel Planner")
+if not DATABASE_URL:
+    st.caption("Session-only mode: drafts are lost when the service restarts.")
 
 with st.sidebar:
     st.subheader("Session")
@@ -34,6 +53,7 @@ with st.sidebar:
 
 query = st.text_area(
     "Travel request",
+    max_chars=8000,
     placeholder="Plan a 7-day Japan trip under Rs. 2 lakh. I prefer budget hotels and no overnight flights.",
     height=110,
 )
@@ -45,8 +65,10 @@ if st.button("Create Draft Plan", type="primary"):
     if not query.strip():
         st.warning("Enter a travel request first.")
     else:
+        st.session_state.thread_id = str(uuid.uuid4())
+        config = {"configurable": {"thread_id": st.session_state.thread_id}}
         with st.spinner("Agents are planning..."):
-            result = app.invoke(
+            result = invoke_workflow(
                 {
                     "messages": [HumanMessage(content=query)],
                     "user_id": user_id,
@@ -102,7 +124,7 @@ if st.session_state.get("waiting_for_approval"):
 
     if st.button("Submit Approval"):
         with st.spinner("Creating final response..."):
-            final_result = app.invoke(
+            final_result = invoke_workflow(
                 Command(
                     resume={
                         "approved": approved == "Yes",
@@ -112,7 +134,7 @@ if st.session_state.get("waiting_for_approval"):
                 config=config,
             )
         st.session_state.latest_result = final_result
-        st.session_state.waiting_for_approval = False
+        st.session_state.waiting_for_approval = "__interrupt__" in final_result
         st.rerun()
 
 

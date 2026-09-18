@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: travel-planner-rishabh
+    runtime: python
+    plan: free
+    rootDir: "Travel_Planner_Agent"
+    buildCommand: pip install -r requirements.txt
+    startCommand: python serve.py
+    healthCheckPath: /_stcore/health
+    autoDeployTrigger: off
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.13.5"
+      - key: APP_PASSWORD
+        generateValue: true
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        value: "gpt-5.1"
