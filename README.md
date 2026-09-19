@@ -4,6 +4,13 @@
 
 A personal Python and GenAI project by Rishabh Shukla. A LangGraph supervisor chooses specialist agents for travel research, then prepares an itinerary for human approval or revision. The Streamlit demo is password protected and may need time to wake up.
 
+## Recruiter quick scan
+
+- **Multi-agent workflow:** a LangGraph supervisor routes relevant work to flight, hotel, weather and budget specialists.
+- **Tool integration:** Tavily MCP and OpenWeather enrich research while missing-provider states are surfaced explicitly.
+- **Human-in-the-loop & persistence:** itinerary approval/revision uses LangGraph interrupts with PostgreSQL checkpointing when configured.
+- **Delivery:** Streamlit, validation, regression tests, GitHub Actions and Render deployment configuration.
+
 ## Implemented behavior
 
 - Supervisor routing selects flight, hotel, weather and budget specialists when relevant.
