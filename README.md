@@ -1,3 +1,15 @@
+<p align="center">
+  <img src="assets/project-banner.svg" alt="Multi-Agent Travel Planner — Specialist agents, itinerary revision and approval" width="100%">
+</p>
+
+<p align="center">
+  <a href="https://my-portfolio-website-topaz-beta.vercel.app/"><strong>Portfolio & demo access</strong></a>
+  &nbsp; · &nbsp;
+  <a href="https://github.com/rs6739171-hash"><strong>More projects by Rishabh</strong></a>
+</p>
+
+---
+
 # Multi-Agent Travel Planner
 
 [Live app](https://travel-planner-rishabh.onrender.com/) · [Portfolio and demo access](https://my-portfolio-website-topaz-beta.vercel.app/)
